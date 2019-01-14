@@ -30,7 +30,22 @@ describe 'dhcp class' do
       it { is_expected.to be_running }
       it { is_expected.to be_enabled }
     end
+
+    describe port(67) do
+      it { is_expected.to be_listening.on('0.0.0.0').with('udp') }
+    end
+
+    ip = fact("networking.interfaces.#{interface}.ip")
+    mac = fact("networking.interfaces.#{interface}.mac")
+
+    describe command("dhcping -c #{ip} -h #{mac} -s #{ip}") do
+      its(:stdout) do
+        pending('This is broken in docker containers')
+        is_expected.to match("Got answer from: #{ip}")
+      end
+    end
   end
+
   context 'minimal other parameters' do
     # Using puppet_apply as a helper
     it 'works idempotently with no errors' do
@@ -50,9 +65,24 @@ describe 'dhcp class' do
       apply_manifest(pp, catch_failures: true)
       apply_manifest(pp, catch_changes: true)
     end
+
     describe service(servicename) do
       it { is_expected.to be_running }
       it { is_expected.to be_enabled }
+    end
+
+    describe port(67) do
+      it { is_expected.to be_listening.on('0.0.0.0').with('udp') }
+    end
+
+    ip = fact("networking.interfaces.#{interface}.ip")
+    mac = fact("networking.interfaces.#{interface}.mac")
+
+    describe command("dhcping -c #{ip} -h #{mac} -s #{ip}") do
+      its(:stdout) do
+        pending('This is broken in docker containers')
+        is_expected.to match("Got answer from: #{ip}")
+      end
     end
   end
 end
